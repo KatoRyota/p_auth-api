@@ -4,8 +4,8 @@
 # import sys
 import os
 import json
+import ConfigParser
 from functools import wraps
-from configparser import ConfigParser
 # }}}
 
 # サードパーティーモジュールのインポート {{{
@@ -14,8 +14,8 @@ from flask import Flask, jsonify, request, url_for, abort, Response
 
 
 # 前処理 {{{
-config = ConfigParser()
-config.read(os.path.dirname(os.path.abspath(__file__)) + '/../app.conf')
+config = ConfigParser.ConfigParser()
+config.readfp(open(os.path.dirname(os.path.abspath(__file__)) + '/api.conf'))
 
 app = Flask(__name__)
 # }}}
@@ -117,5 +117,5 @@ def delete(user_id):
 
 # 後処理 {{{{
 if __name__ == '__main__':
-    app.run()
+    app.run(host='127.0.0.1', port=80, debug=True)
 # }}}
