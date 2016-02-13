@@ -10,10 +10,12 @@
 import sys
 import os
 import re
+import json
 import ConfigParser
 # }}}
 
 # サードパーティーモジュールのインポート {
+from flask import Flask, jsonify, request, url_for, abort, Response
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, eagerload
 # }
@@ -22,7 +24,8 @@ from sqlalchemy.orm import sessionmaker, eagerload
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../entities')
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../test')
 from api_entity import User
-from user_json
+# テストデータ
+import user_json
 # }
 
 # 前処理 {{{
@@ -44,17 +47,10 @@ class UserCreate():
         '''
         try:
             # ToDo :
-            #   KVSにユーザー情報を登録する処理を実装する。
-
+            print(u'KVSにユーザー情報を登録します。')
         except Exception as e:
             print(e.__class__)
             print(e)
-        finally:
-
-        return {
-            'map_key': self.config["google"]["api_key"],
-            'request': request
-        }
 
 
 class UserRead():
@@ -71,13 +67,14 @@ class UserRead():
           KVSからユーザー情報を取得して返します。
         '''
         try:
+            print(u'UserRead.read()開始') # debug
             # Content-Body を JSON 形式として辞書に変換する
             request_json = json.loads(request.data)
             # リクエストされたパスと ID を持つユーザを探す
             acccess_token = request_json['acccess_token']
             user_auth_key = request_json['request_data']['user_auth_key']
 
-            if acccess_token == 'calendar-app':
+            if acccess_token != 'calendar-app':
                 print(u'acccess_tokenが不正です。')
                 # レスポンスオブジェクトを作る
                 user = self._get_user_for_acccess_token_error()
@@ -85,10 +82,11 @@ class UserRead():
                 return response
 
             # テストモード判定
-            if self.config['test']['mode'] == 'true':
+            if self._get_test_mode() == 'true':
                 # レスポンスオブジェクトを作る
                 user = self._get_user_from_user_json(user_auth_key)
                 response = jsonify(user)
+                print(response)
                 return response
             else:
                 # レスポンスオブジェクトを作る
@@ -100,9 +98,14 @@ class UserRead():
         except Exception as e:
             print(e.__class__)
             print(e)
-        finally:
-            # ToDo :
-            #   DBコネクションを切断する処理を実装する。
+
+    def _get_test_mode(self):
+        print(self.config.items('test')) # debug
+
+        for i, test in enumerate(self.config.items('test')):
+            print(test[0]) # debug
+            if test[0] == 'mode':
+                return test[1]
 
     def _get_user_for_acccess_token_error(self):
         '''
@@ -120,18 +123,17 @@ class UserRead():
         '''
         try:
             # ToDo :
-            #   取り敢えず、DBからユーザー情報を取得して返す処理を実装してみる。
+            print(u'KVSからユーザー情報を取得して返します。')
         except Exception as e:
             print(e.__class__)
             print(e)
-
 
     def _get_user_from_user_json(self, user_auth_key):
         '''
           テストデータからユーザー情報を取得して返します。
         '''
         try:
-            return user[user_auth_key]
+            return user_json.user[user_auth_key]
         except Exception as e:
             print(e.__class__)
             print(e)
@@ -152,12 +154,10 @@ class UserUpdate():
         '''
         try:
             # ToDo :
-            #   KVS上のユーザー情報を更新する処理を実装する。
-
+            print(u'KVS上のユーザー情報を更新します。')
         except Exception as e:
             print(e.__class__)
             print(e)
-        finally:
 
 
 class UserDelete():
@@ -175,12 +175,10 @@ class UserDelete():
         '''
         try:
             # ToDo :
-            #   KVS上のユーザー情報を削除する処理を実装する。
-
+            print(u'KVS上のユーザー情報を削除します。')
         except Exception as e:
             print(e.__class__)
             print(e)
-        finally:
 
 
 # 後処理 {{{{

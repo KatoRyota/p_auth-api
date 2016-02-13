@@ -20,7 +20,8 @@ from flask import Flask, jsonify, request, url_for, abort, Response
 # }}}
 
 # 独自モジュールのインポート {{{
-from models.api_model.py import UserCreate, UserRead, UserUpdate, UserDelete
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/models')
+from api_model import UserCreate, UserRead, UserUpdate, UserDelete
 # }}}
 
 # 前処理 {{{
@@ -87,9 +88,11 @@ def create_user():
     return UserCreate().create(request)
 
 
-@api.route('/p_auth-api', methods=['GET'])
+@api.route('/p_auth-api/read_user', methods=['POST'])
 @before('application/json')
 def read_user():
+    print(u'read_user()開始') # debug
+    print(request.data) # debug
     return UserRead().read(request)
 
 

@@ -17,13 +17,13 @@
 
 # 前処理 {{{
 # }}}
-
 user = {
     'aaaa' : {
         'result_code'    : 200,
         'result_message' : '正常終了',
         'response_data'  : {
             'user_id' : 'P111111',
+            'name' : 'aaaa',
             'affiliation_group' : ['技術部', 'システム開発課'],
             'managerial_position' : ['一般社員', 'グルーワークリーダー'],
             'mail_address' : ['bbbb@example.com', 'bbbb@example.co.jp'],
@@ -37,6 +37,7 @@ user = {
         'result_message' : '正常終了',
         'response_data'  : {
             'user_id' : 'P111111',
+            'name' : 'bbbb',
             'affiliation_group' : ['技術部', 'システム開発課'],
             'managerial_position' : ['一般社員', 'グルーワークメンバー'],
             'mail_address' : ['bbbb@example.com', 'bbbb@example.co.jp'],
@@ -50,6 +51,7 @@ user = {
         'result_message' : '正常終了',
         'response_data'  : {
             'user_id' : '',
+            'name' : 'cccc',
             'affiliation_group' : [],
             'managerial_position' : [],
             'mail_address' : [],
