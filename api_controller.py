@@ -1,10 +1,17 @@
 # -*- coding: utf-8 -*-
 
+# 説明 {{{
+'''
+  p_auth_api(認証API)へのリクエストを制御して、models配下のソースコードに処理を委譲し、処理結果を
+  リクエスト元に返します。
+'''
+# }}}
+
 # 標準モジュールのインポート {{{
-# import sys
+import sys
+from optparse import OptionParser
 import os
 import json
-import ConfigParser
 from functools import wraps
 # }}}
 
@@ -12,110 +19,93 @@ from functools import wraps
 from flask import Flask, jsonify, request, url_for, abort, Response
 # }}}
 
-
-# 前処理 {{{
-config = ConfigParser.ConfigParser()
-config.readfp(open(os.path.dirname(os.path.abspath(__file__)) + '/api.conf'))
-
-app = Flask(__name__)
+# 独自モジュールのインポート {{{
+from models.api_model.py import UserCreate, UserRead, UserUpdate, UserDelete
 # }}}
 
-# ダミーデータ (DB の代わり)
-id_index = 3
-users = {1: {'id': 1, 'name': 'foo'},
-         2: {'id': 2, 'name': 'bar'}}
+# 前処理 {{{
+try:
+    # 起動パラメータのパーサー生成
+    parser = OptionParser()
+    parser.add_option("-t", "--host", dest="host", help=u"ホスト名を指定して下さい。 ",
+                      metavar="HOST", type="string")
+    parser.add_option("-p", "--port", dest="port", help=u"ポート番号を指定して下さい。",
+                      metavar="PORT", type="int")
+    parser.add_option("--debug", dest="debug", help=u"サーバーがデバッグモードで起動します。",
+                      action="store_true", default=False)
 
+    # 起動パラメータのパース
+    (options, args) = parser.parse_args()
 
-def consumes(content_type):
-    def _consumes(function):
+    print(options.host) # debug
+
+    # 起動パラメータ入力チェック
+    if options.host is None or not options.host:
+        parser.error(u"ホスト名が不正です。")
+        parser.print_help()
+        exit()
+
+    if options.port is None or not options.port:
+        parser.error(u"ポート番号が不正です。")
+        parser.print_help()
+        exit()
+
+    if options.debug is None or not options.debug:
+        print(u"debug mode : no")
+    else:
+        print(u"debug mode : yes")
+
+    if len(args) != 0:
+        parser.error(u"引数は指定できません。")
+        parser.print_help()
+        exit()
+
+    api = Flask(__name__)
+except Exception as e:
+    print(e.__class__)
+    print(e)
+    exit()
+# }}}
+
+def before(content_type):
+    '''
+      models配下のソースコードに処理を委譲する前に、API共通の処理を行います。
+    '''
+    def _before(function):
         @wraps(function)
-        def __consumes(*argv, **keywords):
+        def __before(*argv, **keywords):
             if request.headers['Content-Type'] != content_type:
                 abort(400)
             return function(*argv, **keywords)
-        return __consumes
-    return _consumes
+        return __before
+    return _before
 
 
-@app.route('/users', methods=['GET'])
-def index():
-    # ユーザ一覧からレスポンスを作る
-    response = jsonify({'results': users.values()})
-    # ステータスコードは OK (200)
-    response.status_code = 200
-    return response
+@api.route('/p_auth-api', methods=['POST'])
+@before('application/json')
+def create_user():
+    return UserCreate().create(request)
 
 
-@app.route('/users', methods=['POST'])
-@consumes('application/json')
-def create():
-    global id_index
-    # Content-Body を JSON 形式として辞書に変換する
-    content_body_dict = json.loads(request.data)
-    # ID を付与する
-    content_body_dict['id'] = id_index
-    # ID をインクリメントする
-    id_index += 1
-    # ユーザ一覧に追加する
-    users[content_body_dict['id']] = (content_body_dict)
-    # レスポンスオブジェクトを作る
-    response = jsonify(content_body_dict)
-    # ステータスコードは Created (201)
-    response.status_code = 201
-    # 作成したリソースを Location ヘッダを設定する
-    response.headers['Location'] = url_for('read',
-                                           user_id=content_body_dict['id'])
-    return response
+@api.route('/p_auth-api', methods=['GET'])
+@before('application/json')
+def read_user():
+    return UserRead().read(request)
 
 
-def _get_user(user_id):
-    user = users.get(user_id)
-    if user is None:
-        abort(404)
-    return user
+@api.route('/p_auth-api', methods=['PUT'])
+@before('application/json')
+def update_user():
+    return UserUpdate().update(request)
 
 
-@app.route('/users/<user_id>', methods=['GET'])
-def read(user_id):
-    # リクエストされたパスと ID を持つユーザを探す
-    found_user = _get_user(user_id)
-    # レスポンスオブジェクトを作る
-    response = jsonify(found_user)
-    # ステータスコードは Created (201)
-    response.status_code = 200
-    return response
-
-
-@app.route('/users/<user_id>', methods=['PUT'])
-@consumes('application/json')
-def update(user_id):
-    # Content-Body を JSON 形式として辞書に変換する
-    content_body_dict = json.loads(request.data)
-    # リクエストされたパスと ID を持つユーザを探す
-    found_user = _get_user(user_id)
-    # ユーザ名を書き換える
-    found_user['name'] = content_body_dict['name']
-    # レスポンスオブジェクトを作る
-    response = jsonify(found_user)
-    # ステータスコードは Created (201)
-    response.status_code = 200
-    return response
-
-
-@app.route('/users/<user_id>', methods=['DELETE'])
-def delete(user_id):
-    # リクエストされたパスと ID を持つユーザを探す
-    _get_user(user_id)
-    # ユーザがいれば削除する
-    users.pop(user_id)
-    # レスポンスオブジェクトを作る
-    response = Response()
-    # ステータスコードは NoContent (204)
-    response.status_code = 204
-    return response
+@api.route('/p_auth-api', methods=['DELETE'])
+@before('application/json')
+def delete_user():
+    return UserDelete().delete(request)
 
 
 # 後処理 {{{{
 if __name__ == '__main__':
-    app.run(host='127.0.0.1', port=80, debug=True)
+    api.run(host=options.host, port=options.port, debug=options.debug)
 # }}}
