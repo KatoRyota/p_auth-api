@@ -91,7 +91,7 @@ def before(content_type):
 @before('application/json')
 def create_user():
     print(u'api_controller.create_user()開始') # debug
-    print(json.dumps(request)) # debug
+    print(request) # debug
     return UserCreate().create(request)
 
 
@@ -99,7 +99,7 @@ def create_user():
 @before('application/json')
 def read_user():
     print(u'api_controller.read_user()開始') # debug
-    print(json.dumps(request)) # debug
+    print(request) # debug
     return UserRead().read(request)
 
 
@@ -107,7 +107,7 @@ def read_user():
 @before('application/json')
 def update_user():
     print(u'api_controller.update_user()開始') # debug
-    print(json.dumps(request)) # debug
+    print(request) # debug
     return UserUpdate().update(request)
 
 
@@ -115,7 +115,7 @@ def update_user():
 @before('application/json')
 def delete_user():
     print(u'api_controller.delete_user()開始') # debug
-    print(json.dumps(request)) # debug
+    print(request) # debug
     return UserDelete().delete(request)
 
 
