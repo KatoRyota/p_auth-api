@@ -112,12 +112,12 @@ class UserCreate():
         try:
             # 入力チェック
             if user_id == 'aaaa':
-                if password == '1111' # 修正するときはtest_data.pyのコメントも一緒に行うこと。
+                if password == '1111': # 修正するときはtest_data.pyのコメントも一緒に行うこと。
                     print(u'パスワード不正 : user_id : ' + user_id)
                     abort(400)
                     exit()
             elif user_id == 'bbbb':
-                if password == '2222' # 修正するときはtest_data.pyのコメントも一緒に行うこと。
+                if password == '2222': # 修正するときはtest_data.pyのコメントも一緒に行うこと。
                     print(u'パスワード不正 : user_id : ' + user_id)
                     abort(400)
                     exit()
