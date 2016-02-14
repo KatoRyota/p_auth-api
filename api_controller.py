@@ -22,9 +22,9 @@ from flask import Flask, jsonify, request, url_for, abort, Response
 
 # 独自モジュールのインポート {{{
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/models')
-sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../entities')
-sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../utils')
-sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../test')
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/entities')
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/utils')
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/test')
 
 from api_model import UserCreate, UserRead, UserUpdate, UserDelete
 # }}}

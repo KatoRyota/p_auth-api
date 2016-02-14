@@ -20,9 +20,6 @@ from sqlalchemy.orm import sessionmaker, eagerload
 # }}}
 
 # 独自モジュールのインポート {{{
-# sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../entities')
-# sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../test')
-
 from api_entity import User
 import api_util
 # テストデータ
