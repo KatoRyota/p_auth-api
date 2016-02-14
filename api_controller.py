@@ -9,9 +9,10 @@
 
 # 標準モジュールのインポート {{{
 import sys
-from optparse import OptionParser
 import os
 import json
+import ConfigParser
+from optparse import OptionParser
 from functools import wraps
 # }}}
 
@@ -21,6 +22,10 @@ from flask import Flask, jsonify, request, url_for, abort, Response
 
 # 独自モジュールのインポート {{{
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/models')
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../entities')
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../utils')
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/../test')
+
 from api_model import UserCreate, UserRead, UserUpdate, UserDelete
 # }}}
 
@@ -82,33 +87,39 @@ def before(content_type):
     return _before
 
 
-@api.route('/p_auth-api', methods=['POST'])
+@api.route('/p_auth-api/create_user', methods=['POST'])
 @before('application/json')
 def create_user():
+    print(u'api_controller.create_user()開始') # debug
+    print(json.dumps(request)) # debug
     return UserCreate().create(request)
 
 
 @api.route('/p_auth-api/read_user', methods=['POST'])
 @before('application/json')
 def read_user():
-    print(u'read_user()開始') # debug
-    print(request.data) # debug
+    print(u'api_controller.read_user()開始') # debug
+    print(json.dumps(request)) # debug
     return UserRead().read(request)
 
 
-@api.route('/p_auth-api', methods=['PUT'])
+@api.route('/p_auth-api/update_user', methods=['PUT'])
 @before('application/json')
 def update_user():
+    print(u'api_controller.update_user()開始') # debug
+    print(json.dumps(request)) # debug
     return UserUpdate().update(request)
 
 
-@api.route('/p_auth-api', methods=['DELETE'])
+@api.route('/p_auth-api/delete_user', methods=['DELETE'])
 @before('application/json')
 def delete_user():
+    print(u'api_controller.delete_user()開始') # debug
+    print(json.dumps(request)) # debug
     return UserDelete().delete(request)
 
 
-# 後処理 {{{{
+# 後処理 {{{
 if __name__ == '__main__':
     api.run(host=options.host, port=options.port, debug=options.debug)
 # }}}

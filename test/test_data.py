@@ -17,8 +17,32 @@
 
 # 前処理 {{{
 # }}}
-user = {
+account = {
+    # ユーザーID : aaaa, パスワード : '1111'
     'aaaa' : {
+        'result_code'    : 200,
+        'result_message' : '正常終了',
+        'response_data'  : {
+            'user_auth_key' : 'aaaa', # ユーザー認証キー
+            'unit_error' : {
+                '200' : '正常終了'
+            }
+        }
+    },
+    # ユーザーID : bbbb, パスワード : '2222'
+    'bbbb' : {
+        'result_code'    : 200,
+        'result_message' : '正常終了',
+        'response_data'  : {
+            'user_auth_key' : 'bbbb', # ユーザー認証キー
+            'unit_error' : {
+                '200' : '正常終了'
+            }
+        }
+    }
+}
+user = {
+    'aaaa' : { # ユーザー認証キー
         'result_code'    : 200,
         'result_message' : '正常終了',
         'response_data'  : {
@@ -32,7 +56,7 @@ user = {
             }
         }
     },
-    'bbbb' : {
+    'bbbb' : { # ユーザー認証キー
         'result_code'    : 200,
         'result_message' : '正常終了',
         'response_data'  : {
@@ -43,20 +67,6 @@ user = {
             'mail_address' : ['bbbb@example.com', 'bbbb@example.co.jp'],
             'unit_error' : {
                 '200' : '正常終了'
-            }
-        }
-    },
-    'cccc' : {
-        'result_code'    : 200,
-        'result_message' : '正常終了',
-        'response_data'  : {
-            'user_id' : '',
-            'name' : 'cccc',
-            'affiliation_group' : [],
-            'managerial_position' : [],
-            'mail_address' : [],
-            'unit_error' : {
-                '400' : 'アクセストークン不正'
             }
         }
     }

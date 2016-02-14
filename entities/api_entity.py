@@ -66,7 +66,7 @@ class User(Base):
                     managerial_position=self.managerial_position, mail_address=self.mail_address)
 
 
-# 後処理 {{{{
+# 後処理 {{{
 if __name__ == '__main__':
     # データベース、テーブル作成処理。モジュールとしてimportする時は実行されない。
     try:
