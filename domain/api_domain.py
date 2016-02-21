@@ -2,7 +2,7 @@
 
 # 説明 {{{
 '''
-  api_controller.pyからリクエストを受け取ってメイン処理を行います。
+  api_service.pyからリクエストを受け取ってメイン処理を行います。
 '''
 # }}}
 
@@ -11,16 +11,18 @@ import sys
 import os
 import json
 import ConfigParser
+import uuid
+from contextlib import contextmanager,
 # }}}
 
 # サードパーティーモジュールのインポート {{{
 from flask import Flask, jsonify, request, url_for, abort, Response
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, eagerload
+from sqlalchemy import create_engine,
+from sqlalchemy.orm import scoped_session, relation, sessionmaker,
 # }}}
 
 # 独自モジュールのインポート {{{
-from api_entity import User
+from api_persistence import User, UserMapper,
 import api_util
 # テストデータ
 import test_data
@@ -58,7 +60,7 @@ class UserCreate():
             if acccess_token != 'calendar-app':
                 print(u'acccess_tokenが不正です。')
                 # レスポンスオブジェクトを作る
-                auth_info = api_util._get_auth_info_for_acccess_token_error()
+                auth_info = self._get_auth_info_for_acccess_token_error()
                 response = jsonify(auth_info)
                 print(response)
                 response.status_code = 200
@@ -74,11 +76,19 @@ class UserCreate():
                 return response
             else:
                 print(u"test mode : no") # debug
-                user = self._get_user_from_db(user_id, password)
-                user.auth_key = self._create_user_auth_key(user_id)
-                self._insert_user_to_kvs(user)
-                # レスポンスオブジェクトを作る
-                auth_info = self._create_auth_info(user)
+                user_from_db = self._select_user_fron_db(user_id, password)
+
+                if len(user_from_db) == 1:
+                    user_auth_key = self._create_user_auth_key(user_from_db['user_id'])
+                    user_to_kvs = self._create_user_to_kvs(user_from_db, user_auth_key)
+
+                    if self._insert_user_to_kvs(user_to_kvs):
+                        auth_info = self._create_auth_info(user)
+                    else:
+                        auth_info = self._get_auth_info_for_kvs_insert_error()
+                else:
+                    auth_info = self._get_auth_info_for_auth_error()
+
                 response = jsonify(auth_info)
                 print(response)
                 response.status_code = 200
@@ -98,6 +108,36 @@ class UserCreate():
                 'user_auth_key' : '',
                 'unit_error' : {
                     '400' : 'アクセストークン不正'
+                }
+            }
+        }
+
+    def _get_auth_info_for_auth_error(self):
+        '''
+          認証エラー用のレスポンスオブジェクトを生成して返します。
+        '''
+        return {
+            'result_code'    : 200,
+            'result_message' : '正常終了',
+            'response_data'  : {
+                'user_auth_key' : '',
+                'unit_error' : {
+                    '401' : '認証エラー'
+                }
+            }
+        }
+
+    def _get_auth_info_for_kvs_insert_error(self):
+        '''
+          KVS INSERT エラー用のレスポンスオブジェクトを生成して返します。
+        '''
+        return {
+            'result_code'    : 200,
+            'result_message' : '正常終了',
+            'response_data'  : {
+                'user_auth_key' : '',
+                'unit_error' : {
+                    '402' : 'KVS INSERT エラー'
                 }
             }
         }
@@ -128,25 +168,25 @@ class UserCreate():
             print(e.__class__)
             print(e)
 
-    def _get_user_from_db(self, user_id, password):
-        '''
-          DBからユーザー情報を取得して、KVS登録用のオブジェクトに変換して返します。
-        '''
-        try:
-            return None
-        except Exception as e:
-            print(e.__class__)
-            print(e)
-
     def _create_user_auth_key(self, user_id):
         '''
           ユーザー認証キーを生成して返します。
         '''
-        try:
-            return None
-        except Exception as e:
-            print(e.__class__)
-            print(e)
+        return uuid.uuid4()
+
+    def _create_user_to_kvs(self, user_from_db, user_auth_key)
+        '''
+          KVS INSERT 用のオブジェクトを生成して返します。
+        '''
+        return {
+            user_auth_key : {
+                'user_id' : user_from_db['user_id'],
+                'name' : user_from_db['name'],
+                'affiliation_group' : user_from_db['affiliation_group'].split(","),
+                'managerial_position' : user_from_db['managerial_position'].split(","),
+                'mail_address' : user_from_db['mail_address'].split(",")
+            }
+        }
 
     def _create_auth_info(self, user_id):
         '''
@@ -158,15 +198,33 @@ class UserCreate():
             print(e.__class__)
             print(e)
 
+    def _select_user_fron_db(self, user_id, password):
+        session = None
+        try:
+            # データベースの接続情報を取得。
+            engine = create_engine(self.config['data_source']['dsn'], echo=True)
+            # セッションはスレッドローカルにする
+            Session = scoped_session(sessionmaker(bind=engine))
+            session = Session()
+            return UserMapper.select(session, user_id=user_id, password=password)
+        except:
+            raise
+        finally:
+            session.close()
+
     def _insert_user_to_kvs(self, user):
         '''
           KVSにユーザー情報を登録します。
         '''
         try:
-            return None
+            if '成功した場合':
+                return True
+            else:
+                return False
         except Exception as e:
             print(e.__class__)
             print(e)
+            return False
 
 
 class UserRead():

@@ -2,7 +2,7 @@
 
 # 説明 {{{
 '''
-  p_auth_api(認証API)へのリクエストを制御して、models配下のソースコードに処理を委譲し、処理結果を
+  p_auth_api(認証API)へのリクエストを制御して、domain配下のソースコードに処理を委譲し、処理結果を
   リクエスト元に返します。
 '''
 # }}}
@@ -21,12 +21,12 @@ from flask import Flask, jsonify, request, url_for, abort, Response
 # }}}
 
 # 独自モジュールのインポート {{{
-sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/models')
-sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/entities')
-sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/utils')
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/domain')
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/persistence')
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/util')
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/test')
 
-from api_model import UserCreate, UserRead, UserUpdate, UserDelete
+from api_domain import UserCreate, UserRead, UserUpdate, UserDelete
 # }}}
 
 # 前処理 {{{
