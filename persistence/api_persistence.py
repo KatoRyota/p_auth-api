@@ -60,7 +60,7 @@ class UserEntity(Base, BaseEntity):
     mail_address = Column(String(255))
 
 
-class UserMapper(BaseMapper):
+class UserMapper(object):
     '''
       UserオブジェクトとUserEntityオブジェクトをマッピングするマッパークラス
     '''
