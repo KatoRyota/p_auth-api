@@ -4,7 +4,7 @@
 '''
   アプリケーションのルートディレクトリで以下のコマンドを実行するとテーブルが作成されます。
 
-    python entities/api_entity.py
+    python persistence/api_persistence.py
 '''
 # }}}
 
@@ -25,21 +25,6 @@ from sqlalchemy.orm import scoped_session, relation, sessionmaker,
 # }}}
 
 # 前処理 {{{
-try:
-    # 設定ファイルのロード
-    # 設定ファイルを読み込む処理がダメ。これだと何度か読み込み処理を行っていることになる。
-    config = ConfigParser.ConfigParser()
-    config.readfp(open(os.path.dirname(os.path.abspath(__file__)) + '/../api.conf'))
-except Exception as e:
-    print(e.__class__)
-    print(e)
-    exit()
-
-# データベースの接続情報を取得。
-engine = create_engine(config['data_source']['dsn'], echo=True)
-# セッションはスレッドローカルにする
-Session = scoped_session(sessionmaker(bind=engine))
-# ドメインが継承するスーパークラス
 Base = declarative_base()
 # }}}
 
@@ -60,7 +45,7 @@ def transaction():
         session.close()
 
 
-class EntityBase(object):
+class BaseEntity(object):
     '''
       エンティティクラス共通の親クラス
     '''
@@ -73,7 +58,7 @@ class EntityBase(object):
                                               attrs=', '.join(items),)
 
 
-class UserEntity(Base, EntityBase):
+class UserEntity(Base, BaseEntity):
     '''
       ユーザー (社員) エンティティクラス
     '''
@@ -93,7 +78,7 @@ class UserEntity(Base, EntityBase):
     mail_address = Column(String(255))
 
 
-class MapperBase(object):
+class BaseMapper(object):
     '''
       マッパークラスの共通親クラス
     '''
@@ -104,7 +89,7 @@ class MapperBase(object):
         return Session()
 
 
-class UserMapper(MapperBase):
+class UserMapper(BaseMapper):
     '''
       UserオブジェクトとUserEntityオブジェクトをマッピングするマッパークラス
     '''
@@ -162,6 +147,14 @@ class User(object):
 if __name__ == '__main__':
     # データベース、テーブル作成処理。モジュールとしてimportする時は実行されない。
     try:
+        config = ConfigParser.ConfigParser()
+        config.readfp(open(os.path.dirname(os.path.abspath(__file__)) + '/../api.conf'))
+
+        # データベースの接続情報を取得。
+        engine = create_engine(config['data_source']['dsn'], echo=True)
+        # セッションはスレッドローカルにする
+        Session = scoped_session(sessionmaker(bind=engine))
+
         # データベースかテーブルが存在する場合は新規作成しない。
         Base.metadata.create_all(bind=engine, checkfirst=False)
     except Exception as e:
@@ -169,5 +162,6 @@ if __name__ == '__main__':
         print(e)
     finally:
         print(os.getpid())
+        exit()
 # }}}
 
