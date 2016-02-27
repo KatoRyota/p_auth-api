@@ -12,17 +12,17 @@ import os
 import json
 import ConfigParser
 import uuid
-from contextlib import contextmanager,
+from contextlib import contextmanager
 # }}}
 
 # サードパーティーモジュールのインポート {{{
 from flask import Flask, jsonify, request, url_for, abort, Response
-from sqlalchemy import create_engine,
-from sqlalchemy.orm import scoped_session, relation, sessionmaker,
+from sqlalchemy import create_engine
+from sqlalchemy.orm import scoped_session, relation, sessionmaker
 # }}}
 
 # 独自モジュールのインポート {{{
-from api_persistence import User, UserMapper,
+from api_persistence import User, UserMapper
 import api_util
 # テストデータ
 import test_data
@@ -39,8 +39,8 @@ class UserCreate():
     def __init__(self):
         try:
             # 設定ファイルのロード
-            self.config = ConfigParser.ConfigParser()
-            self.config.readfp(open(os.path.dirname(os.path.abspath(__file__)) + '/../api.conf'))
+            self.config = ConfigParser.SafeConfigParser()
+            self.config.read(os.path.dirname(os.path.abspath(__file__)) + '/../api.conf')
         except Exception as e:
             print(e.__class__)
             print(e)
@@ -174,7 +174,7 @@ class UserCreate():
         '''
         return uuid.uuid4()
 
-    def _create_user_to_kvs(self, user_from_db, user_auth_key)
+    def _create_user_to_kvs(self, user_from_db, user_auth_key):
         '''
           KVS INSERT 用のオブジェクトを生成して返します。
         '''
@@ -202,7 +202,7 @@ class UserCreate():
         session = None
         try:
             # データベースの接続情報を取得。
-            engine = create_engine(self.config['data_source']['dsn'], echo=True)
+            engine = create_engine(self.config.get('data_source', 'dsn'), echo=True)
             # セッションはスレッドローカルにする
             Session = scoped_session(sessionmaker(bind=engine))
             session = Session()
@@ -217,10 +217,7 @@ class UserCreate():
           KVSにユーザー情報を登録します。
         '''
         try:
-            if '成功した場合':
-                return True
-            else:
-                return False
+            print(json.dumps(user))
         except Exception as e:
             print(e.__class__)
             print(e)
@@ -234,8 +231,8 @@ class UserRead():
     def __init__(self):
         try:
             # 設定ファイルのロード
-            self.config = ConfigParser.ConfigParser()
-            self.config.readfp(open(os.path.dirname(os.path.abspath(__file__)) + '/../api.conf'))
+            self.config = ConfigParser.SafeConfigParser()
+            self.config.read(os.path.dirname(os.path.abspath(__file__)) + '/../api.conf')
         except Exception as e:
             print(e.__class__)
             print(e)
@@ -327,8 +324,8 @@ class UserUpdate():
     def __init__(self):
         try:
             # 設定ファイルのロード
-            self.config = ConfigParser.ConfigParser()
-            self.config.readfp(open(os.path.dirname(os.path.abspath(__file__)) + '/../api.conf'))
+            self.config = ConfigParser.SafeConfigParser()
+            self.config.read(os.path.dirname(os.path.abspath(__file__)) + '/../api.conf')
         except Exception as e:
             print(e.__class__)
             print(e)
@@ -352,8 +349,8 @@ class UserDelete():
     def __init__(self):
         try:
             # 設定ファイルのロード
-            self.config = ConfigParser.ConfigParser()
-            self.config.readfp(open(os.path.dirname(os.path.abspath(__file__)) + '/../api.conf'))
+            self.config = ConfigParser.SafeConfigParser()
+            self.config.read(os.path.dirname(os.path.abspath(__file__)) + '/../api.conf')
         except Exception as e:
             print(e.__class__)
             print(e)

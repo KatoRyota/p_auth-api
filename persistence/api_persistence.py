@@ -11,14 +11,12 @@
 # 標準モジュールのインポート {{{
 import os
 import ConfigParser
-import abc
-from contextlib import contextmanager,
 # }}}
 
 # サードパーティーモジュールのインポート {{{
-from sqlalchemy import create_engine, Column, ForeignKey, String, Integer,
-from sqlalchemy.ext.declarative import declarative_base,
-from sqlalchemy.orm import scoped_session, relation, sessionmaker,
+from sqlalchemy import create_engine, Column, ForeignKey, String, Integer
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import scoped_session, relation, sessionmaker
 # }}}
 
 # 独自モジュールのインポート {{{
@@ -27,22 +25,6 @@ from sqlalchemy.orm import scoped_session, relation, sessionmaker,
 # 前処理 {{{
 Base = declarative_base()
 # }}}
-
-
-@contextmanager
-def transaction():
-    '''
-      DBトランザクション用のコンテキストマネージャ
-    '''
-    session = Session()
-    try:
-        yield session
-        session.commit()
-    except:
-        session.rollback()
-        raise
-    finally:
-        session.close()
 
 
 class BaseEntity(object):
@@ -76,17 +58,6 @@ class UserEntity(Base, BaseEntity):
     managerial_position = Column(String(255))
     # メールアドレス
     mail_address = Column(String(255))
-
-
-class BaseMapper(object):
-    '''
-      マッパークラスの共通親クラス
-    '''
-    __metaclass__ = abc.ABCMeta
-
-    @classmethod
-    def get_session(cls):
-        return Session()
 
 
 class UserMapper(BaseMapper):
@@ -133,8 +104,8 @@ class User(object):
     '''
       ユーザー (社員) ドメインクラス
     '''
-    def __init__(self, id_=None, user_id, password, name, affiliation_group,
-                 managerial_position, mail_address):
+    def __init__(self, user_id, password, name, affiliation_group, managerial_position,
+                 mail_address, id_=None):
         self.id = id_
         self.user_id = user_id
         self.password = password
@@ -145,17 +116,14 @@ class User(object):
 
 # 後処理 {{{
 if __name__ == '__main__':
-    # データベース、テーブル作成処理。モジュールとしてimportする時は実行されない。
+    # データベース、テーブル作成処理。モジュールとしてimportされる時は実行されない。
     try:
-        config = ConfigParser.ConfigParser()
-        config.readfp(open(os.path.dirname(os.path.abspath(__file__)) + '/../api.conf'))
-
-        # データベースの接続情報を取得。
-        engine = create_engine(config['data_source']['dsn'], echo=True)
-        # セッションはスレッドローカルにする
-        Session = scoped_session(sessionmaker(bind=engine))
-
-        # データベースかテーブルが存在する場合は新規作成しない。
+        # 設定ファイルのロード
+        config = ConfigParser.SafeConfigParser()
+        config.read(os.path.dirname(os.path.abspath(__file__)) + '/../api.conf')
+        # データベースのコネクションを取得
+        engine = create_engine(config.get('data_source', 'dsn'), echo=True)
+        # データベース, テーブル作成
         Base.metadata.create_all(bind=engine, checkfirst=False)
     except Exception as e:
         print(e.__class__)
