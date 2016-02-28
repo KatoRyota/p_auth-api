@@ -85,7 +85,6 @@ class UserMapper(object):
         print('UserMapper.select()開始')
         print('**kwargs : ' + json.dumps(kwargs)) # debug
         user_list_from_db = session.query(UserEntity).filter_by(**kwargs).all()
-        print('user_list_from_db : ' + json.dumps(user_list_from_db)) # debug
         user_list = []
         for user_from_db in user_list_from_db:
             user = User(
@@ -97,6 +96,8 @@ class UserMapper(object):
                 managerial_position=user_from_db.managerial_position,
                 mail_address=user_from_db.mail_address
             )
+            print('user_id : ' + user_from_db.user_id) # debug
+            print('id : ' + str(user_from_db.id)) # debug
             user_list.append(user)
         return user_list
 

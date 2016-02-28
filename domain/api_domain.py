@@ -76,14 +76,14 @@ class UserCreate():
                 return response
             else:
                 print(u"test mode : no") # debug
-                user_from_db = self._select_user_fron_db(user_id, password)
+                user_list_from_db = self._select_user_from_db(user_id, password)
 
-                if len(user_from_db) == 1:
-                    user_auth_key = self._create_user_auth_key(user_from_db[0]['user_id'])
-                    user_to_kvs = self._create_user_to_kvs(user_from_db[0], user_auth_key)
+                if len(user_list_from_db) == 1:
+                    user_auth_key = self._create_user_auth_key(user_list_from_db[0].user_id)
+                    user_to_kvs = self._create_user_to_kvs(user_list_from_db[0], user_auth_key)
 
                     if self._insert_user_to_kvs(user_to_kvs):
-                        auth_info = self._create_auth_info(user)
+                        auth_info = self._create_auth_info(user_auth_key)
                     else:
                         auth_info = self._get_auth_info_for_kvs_insert_error()
                 else:
@@ -172,7 +172,7 @@ class UserCreate():
         '''
           ユーザー認証キーを生成して返します。
         '''
-        return uuid.uuid4()
+        return str(uuid.uuid4())
 
     def _create_user_to_kvs(self, user_from_db, user_auth_key):
         '''
@@ -180,25 +180,30 @@ class UserCreate():
         '''
         return {
             user_auth_key : {
-                'user_id' : user_from_db['user_id'],
-                'name' : user_from_db['name'],
-                'affiliation_group' : user_from_db['affiliation_group'].split(","),
-                'managerial_position' : user_from_db['managerial_position'].split(","),
-                'mail_address' : user_from_db['mail_address'].split(",")
+                'user_id' : user_from_db.user_id,
+                'name' : user_from_db.name,
+                'affiliation_group' : user_from_db.affiliation_group.split(","),
+                'managerial_position' : user_from_db.managerial_position.split(","),
+                'mail_address' : user_from_db.mail_address.split(",")
             }
         }
 
-    def _create_auth_info(self, user_id):
+    def _create_auth_info(self, user_auth_key):
         '''
           認証情報を生成して返します。
         '''
-        try:
-            return None
-        except Exception as e:
-            print(e.__class__)
-            print(e)
+        return {
+            'result_code'    : 200,
+            'result_message' : '正常終了',
+            'response_data'  : {
+                'user_auth_key' : user_auth_key,
+                'unit_error' : {
+                    '200' : '正常終了'
+                }
+            }
+        }
 
-    def _select_user_fron_db(self, user_id, password):
+    def _select_user_from_db(self, user_id, password):
         session = None
         try:
             # データベースの接続情報を取得。
@@ -208,8 +213,11 @@ class UserCreate():
             Session = scoped_session(sessionmaker(autocommit=False, autoflush=False, bind=engine))
             session = Session()
             print('user_id : ' + user_id + ', password : ' + password)
-            return UserMapper.select(session, user_id=user_id, password=password)
+            user_list_from_db = UserMapper.select(session, user_id=user_id, password=password)
+            session.commit()
+            return user_list_from_db
         except:
+            session.rollback()
             raise
         finally:
             session.close()
@@ -219,7 +227,8 @@ class UserCreate():
           KVSにユーザー情報を登録します。
         '''
         try:
-            print(json.dumps(user))
+            print(u'KVSにユーザー情報を登録します。')
+            return True
         except Exception as e:
             print(e.__class__)
             print(e)
