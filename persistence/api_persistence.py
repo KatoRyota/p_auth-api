@@ -10,6 +10,7 @@
 
 # 標準モジュールのインポート {{{
 import os
+import json
 import ConfigParser
 # }}}
 
@@ -80,18 +81,24 @@ class UserMapper(object):
         return user_from_db.id
 
     @classmethod
-    def select(session, **kwargs):
-        user_from_db = session.query(UserEntity).filter_by(**kwargs)
-        users = User(
-            id_=user_from_db.id,
-            user_id=user_from_db.user_id,
-            password=user_from_db.password,
-            name=user_from_db.name,
-            affiliation_group=user_from_db.affiliation_group,
-            managerial_position=user_from_db.managerial_position,
-            mail_address=user_from_db.mail_address,
-        )
-        return users
+    def select(cls, session, **kwargs):
+        print('UserMapper.select()開始')
+        print('**kwargs : ' + json.dumps(kwargs)) # debug
+        user_list_from_db = session.query(UserEntity).filter_by(**kwargs).all()
+        print('user_list_from_db : ' + json.dumps(user_list_from_db)) # debug
+        user_list = []
+        for user_from_db in user_list_from_db:
+            user = User(
+                id_=user_from_db.id,
+                user_id=user_from_db.user_id,
+                password=user_from_db.password,
+                name=user_from_db.name,
+                affiliation_group=user_from_db.affiliation_group,
+                managerial_position=user_from_db.managerial_position,
+                mail_address=user_from_db.mail_address
+            )
+            user_list.append(user)
+        return user_list
 
     @classmethod
     def delete(cls, user):
@@ -122,7 +129,8 @@ if __name__ == '__main__':
         config = ConfigParser.SafeConfigParser()
         config.read(os.path.dirname(os.path.abspath(__file__)) + '/../api.conf')
         # データベースのコネクションを取得
-        engine = create_engine(config.get('data_source', 'dsn'), echo=True)
+        engine = create_engine(config.get('data_source', 'dsn'), echo=True,
+                                          encoding='utf-8', convert_unicode=True)
         # データベース, テーブル作成
         Base.metadata.create_all(bind=engine, checkfirst=False)
     except Exception as e:

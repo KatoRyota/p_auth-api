@@ -79,8 +79,8 @@ class UserCreate():
                 user_from_db = self._select_user_fron_db(user_id, password)
 
                 if len(user_from_db) == 1:
-                    user_auth_key = self._create_user_auth_key(user_from_db['user_id'])
-                    user_to_kvs = self._create_user_to_kvs(user_from_db, user_auth_key)
+                    user_auth_key = self._create_user_auth_key(user_from_db[0]['user_id'])
+                    user_to_kvs = self._create_user_to_kvs(user_from_db[0], user_auth_key)
 
                     if self._insert_user_to_kvs(user_to_kvs):
                         auth_info = self._create_auth_info(user)
@@ -202,10 +202,12 @@ class UserCreate():
         session = None
         try:
             # データベースの接続情報を取得。
-            engine = create_engine(self.config.get('data_source', 'dsn'), echo=True)
+            engine = create_engine(self.config.get('data_source', 'dsn'), echo=True,
+                                                   encoding='utf-8', convert_unicode=True)
             # セッションはスレッドローカルにする
-            Session = scoped_session(sessionmaker(bind=engine))
+            Session = scoped_session(sessionmaker(autocommit=False, autoflush=False, bind=engine))
             session = Session()
+            print('user_id : ' + user_id + ', password : ' + password)
             return UserMapper.select(session, user_id=user_id, password=password)
         except:
             raise
