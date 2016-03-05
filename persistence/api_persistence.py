@@ -11,6 +11,7 @@
 # 標準モジュールのインポート {{{
 import os
 import json
+import pickle
 import ConfigParser
 # }}}
 
@@ -21,6 +22,7 @@ from sqlalchemy.orm import scoped_session, relation, sessionmaker
 # }}}
 
 # 独自モジュールのインポート {{{
+from api_util
 # }}}
 
 # 前処理 {{{
@@ -85,6 +87,8 @@ class UserMapper(object):
         print('UserMapper.select()開始')
         print('**kwargs : ' + json.dumps(kwargs)) # debug
         user_list_from_db = session.query(UserEntity).filter_by(**kwargs).all()
+        # print(pickle.dumps(user_list_from_db))
+        api_util.to_json(user_list_from_db)
         user_list = []
         for user_from_db in user_list_from_db:
             user = User(
