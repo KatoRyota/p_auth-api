@@ -22,7 +22,7 @@ from sqlalchemy.orm import scoped_session, relation, sessionmaker
 # }}}
 
 # 独自モジュールのインポート {{{
-from api_util
+import api_util
 # }}}
 
 # 前処理 {{{
@@ -145,4 +145,5 @@ if __name__ == '__main__':
         print(os.getpid())
         exit()
 # }}}
+
 
