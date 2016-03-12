@@ -356,7 +356,7 @@ class UserRead():
             'result_code'    : 200,
             'result_message' : u'正常終了',
             'response_data'  : {
-                'user_id' : user_from_kvs['user_id']
+                'user_id' : user_from_kvs['user_id'],
                 'name' : user_from_kvs['name'],
                 'affiliation_group' : user_from_kvs['affiliation_group'].split(','),
                 'managerial_position' : user_from_kvs['managerial_position'].split(','),
