@@ -243,6 +243,10 @@ class UserCreate():
           KVSにユーザー情報を登録します。
         '''
         try:
+
+            # TODO
+            #   恐らくここでエラーになってる (SSH接続からログアウトしたときの話)
+
             print(u'KVSにユーザー情報を登録します。')
             conn = redis.StrictRedis(host='localhost', port=6379)
             conn.hmset(user_auth_key, user_to_kvs)
@@ -338,6 +342,10 @@ class UserRead():
           KVSからユーザー情報を取得して返します。
         '''
         try:
+
+            # TODO
+            #   恐らくここでエラーになってる (SSH接続からログアウトしたときの話)
+
             print(u'KVSからユーザー情報を取得して返します。')
             # Redisとのコネクション取得
             conn = redis.StrictRedis(host='localhost', port=6379)

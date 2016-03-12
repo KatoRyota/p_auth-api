@@ -12,6 +12,8 @@ import sys
 import os
 import json
 import ConfigParser
+import logging
+import logging.config
 from optparse import OptionParser
 from functools import wraps
 # }}}
@@ -30,6 +32,8 @@ from api_domain import UserCreate, UserRead, UserUpdate, UserDelete
 # }}}
 
 # 前処理 {{{
+# ロギングライブラリ読込
+logging.config.fileConfig('logging.conf')
 try:
     # 起動パラメータのパーサー生成
     parser = OptionParser()
@@ -90,32 +94,32 @@ def before(content_type):
 @api.route('/p_auth-api/create_user', methods=['POST'])
 @before('application/json')
 def create_user():
-    print(u'api_controller.create_user()開始') # debug
-    print(request) # debug
+    logger = logging.getLogger('logExample')
+    logger.info(u'api_service.create_user()開始')
     return UserCreate().create(request)
 
 
 @api.route('/p_auth-api/read_user', methods=['POST'])
 @before('application/json')
 def read_user():
-    print(u'api_controller.read_user()開始') # debug
-    print(request) # debug
+    logger = logging.getLogger('logExample')
+    logger.info(u'api_service.read_user()開始')
     return UserRead().read(request)
 
 
 @api.route('/p_auth-api/update_user', methods=['PUT'])
 @before('application/json')
 def update_user():
-    print(u'api_controller.update_user()開始') # debug
-    print(request) # debug
+    logger = logging.getLogger('logExample')
+    logger.info(u'api_service.update_user()開始')
     return UserUpdate().update(request)
 
 
 @api.route('/p_auth-api/delete_user', methods=['DELETE'])
 @before('application/json')
 def delete_user():
-    print(u'api_controller.delete_user()開始') # debug
-    print(request) # debug
+    logger = logging.getLogger('logExample')
+    logger.info(u'api_service.delete_user()開始')
     return UserDelete().delete(request)
 
 
