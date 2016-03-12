@@ -302,7 +302,7 @@ class UserRead():
             # 通常モード
             else:
                 # ユーザー情報取得 (検索条件にユーザー認証キーをセットしてRedisから取得)
-                user = self._get_user_from_kvs(user_auth_key)
+                user = self._convert_user_from_kvs(self._get_user_from_kvs(user_auth_key))
                 print(json.dumps(user, ensure_ascii=False, indent=4))
                 # ユーザー情報を返す
                 return Response(
@@ -347,6 +347,25 @@ class UserRead():
             print(e.__class__)
             print(e)
             raise
+
+    def _convert_user_from_kvs(self, user_from_kvs):
+        '''
+          KVSから取得したユーザー情報をレスポンスオブジェクトに変換して返します。
+        '''
+        return {
+            'result_code'    : 200,
+            'result_message' : u'正常終了',
+            'response_data'  : {
+                'user_id' : user_from_kvs['user_id']
+                'name' : user_from_kvs['name'],
+                'affiliation_group' : user_from_kvs['affiliation_group'].split(','),
+                'managerial_position' : user_from_kvs['managerial_position'].split(','),
+                'mail_address' : user_from_kvs['mail_address'].split(','),
+                'unit_error' : {
+                    '400' : u'アクセストークン不正'
+                }
+            }
+        }
 
     def _get_user_from_test_data(self, user_auth_key):
         '''
