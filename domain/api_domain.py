@@ -352,17 +352,24 @@ class UserRead():
         '''
           KVSから取得したユーザー情報をレスポンスオブジェクトに変換して返します。
         '''
+        print(u'KVSから取得したユーザー情報をレスポンスオブジェクトに変換して返します。')
         return {
             'result_code'    : 200,
             'result_message' : u'正常終了',
             'response_data'  : {
-                'user_id' : user_from_kvs['user_id'],
-                'name' : user_from_kvs['name'],
-                'affiliation_group' : user_from_kvs['affiliation_group'].split(','),
-                'managerial_position' : user_from_kvs['managerial_position'].split(','),
-                'mail_address' : user_from_kvs['mail_address'].split(','),
+                'user_id' : user_from_kvs['user_id'].decode('utf-8'),
+                'name' : user_from_kvs['name'].decode('utf-8'),
+                'affiliation_group' : [
+                    x.decode('utf-8') for x in user_from_kvs['affiliation_group'].split(',')
+                ],
+                'managerial_position' : [
+                    x.decode('utf-8') for x in user_from_kvs['managerial_position'].split(',')
+                ],
+                'mail_address' : [
+                    x.decode('utf-8') for x in user_from_kvs['mail_address'].split(',')
+                ],
                 'unit_error' : {
-                    '400' : u'アクセストークン不正'
+                    '200' : u'正常終了'
                 }
             }
         }
