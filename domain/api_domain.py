@@ -19,6 +19,7 @@ from contextlib import contextmanager
 from flask import Flask, jsonify, request, url_for, abort, Response
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, relation, sessionmaker
+import redis
 # }}}
 
 # 独自モジュールのインポート {{{
@@ -51,48 +52,64 @@ class UserCreate():
         '''
         try:
             print(u'UserCreate.create()開始') # debug
-            # Content-Body を JSON 形式として辞書に変換する
+            # json→dict
             request_json = json.loads(request.data)
-            acccess_token = request_json['acccess_token']
-            user_id = request_json['request_data']['user_id']
-            password = request_json['request_data']['password']
-
+            acccess_token = request_json['acccess_token']        # アクセストークン
+            user_id = request_json['request_data']['user_id']    # ユーザーID
+            password = request_json['request_data']['password']  # パスワード
+            # アクセストークンチェック
             if acccess_token != 'calendar-app':
                 print(u'acccess_tokenが不正です。')
-                # レスポンスオブジェクトを作る
+                # 認証情報オブジェクトを生成
                 auth_info = self._get_auth_info_for_acccess_token_error()
-                response = jsonify(auth_info)
-                print(response)
-                response.status_code = 200
-                return response
-            # テストモード判定
+                # ユーザー認証情報を返す (認証キーは空文字)
+                return Response(
+                    json.dumps(auth_info, ensure_ascii=False, indent=4),
+                    mimetype='application/json',
+                    status=200,
+                )
+            # テストモードチェック
             elif api_util.get_test_mode(self) == 'true':
                 print(u"test mode : yes") # debug
-                # レスポンスオブジェクトを作る
+                # 認証情報オブジェクトを生成
                 auth_info = self._get_auth_info_from_test_data(user_id, password)
-                response = jsonify(auth_info)
-                print(response)
-                response.status_code = 200
-                return response
+                # ユーザー認証情報を返す (認証キーはテスト用の固定値)
+                return Response(
+                    json.dumps(auth_info, ensure_ascii=False, indent=4),
+                    mimetype='application/json',
+                    status=200,
+                )
+            # 通常モード
             else:
                 print(u"test mode : no") # debug
+                # DBからユーザー情報取得
                 user_list_from_db = self._select_user_from_db(user_id, password)
-
+                # レコード数チェック
                 if len(user_list_from_db) == 1:
+                    # レコードが1件の場合は正常系
+                    # ユーザー認証キー生成
                     user_auth_key = self._create_user_auth_key(user_list_from_db[0].user_id)
-                    user_to_kvs = self._create_user_to_kvs(user_list_from_db[0], user_auth_key)
-
-                    if self._insert_user_to_kvs(user_to_kvs):
+                    # Redis登録用オブジェクト生成
+                    user_to_kvs = self._create_user_to_kvs(user_list_from_db[0])
+                    # Redis登録処理
+                    if self._insert_user_to_kvs(user_auth_key, user_to_kvs):
+                        # Redis登録処理の成功
+                        # 認証情報オブジェクトを生成
                         auth_info = self._create_auth_info(user_auth_key)
                     else:
+                        # Redis登録処理の失敗
+                        # 認証情報オブジェクトを生成
                         auth_info = self._get_auth_info_for_kvs_insert_error()
                 else:
+                    # レコードが複数件の場合はエラー
+                    # 認証情報オブジェクトを生成
                     auth_info = self._get_auth_info_for_auth_error()
-
-                response = jsonify(auth_info)
-                print(response)
-                response.status_code = 200
-                return response
+                # ユーザー認証情報を返す (認証キーは前処理で取得したもの)
+                return Response(
+                    json.dumps(auth_info, ensure_ascii=False, indent=4),
+                    mimetype='application/json',
+                    status=200,
+                )
         except Exception as e:
             print(e.__class__)
             print(e)
@@ -103,11 +120,11 @@ class UserCreate():
         '''
         return {
             'result_code'    : 200,
-            'result_message' : '正常終了',
+            'result_message' : u'正常終了',
             'response_data'  : {
                 'user_auth_key' : '',
                 'unit_error' : {
-                    '400' : 'アクセストークン不正'
+                    '400' : u'アクセストークン不正'
                 }
             }
         }
@@ -116,13 +133,14 @@ class UserCreate():
         '''
           認証エラー用のレスポンスオブジェクトを生成して返します。
         '''
+        print(u'認証エラー')
         return {
             'result_code'    : 200,
-            'result_message' : '正常終了',
+            'result_message' : u'正常終了',
             'response_data'  : {
                 'user_auth_key' : '',
                 'unit_error' : {
-                    '401' : '認証エラー'
+                    '401' : u'認証エラー'
                 }
             }
         }
@@ -133,11 +151,11 @@ class UserCreate():
         '''
         return {
             'result_code'    : 200,
-            'result_message' : '正常終了',
+            'result_message' : u'正常終了',
             'response_data'  : {
                 'user_auth_key' : '',
                 'unit_error' : {
-                    '402' : 'KVS INSERT エラー'
+                    '402' : u'KVS INSERT エラー'
                 }
             }
         }
@@ -174,31 +192,17 @@ class UserCreate():
         '''
         return str(uuid.uuid4())
 
-    def _create_user_to_kvs(self, user_from_db, user_auth_key):
-        '''
-          KVS INSERT 用のオブジェクトを生成して返します。
-        '''
-        return {
-            user_auth_key : {
-                'user_id' : user_from_db.user_id,
-                'name' : user_from_db.name,
-                'affiliation_group' : user_from_db.affiliation_group.split(","),
-                'managerial_position' : user_from_db.managerial_position.split(","),
-                'mail_address' : user_from_db.mail_address.split(",")
-            }
-        }
-
     def _create_auth_info(self, user_auth_key):
         '''
           認証情報を生成して返します。
         '''
         return {
             'result_code'    : 200,
-            'result_message' : '正常終了',
+            'result_message' : u'正常終了',
             'response_data'  : {
                 'user_auth_key' : user_auth_key,
                 'unit_error' : {
-                    '200' : '正常終了'
+                    '200' : u'正常終了'
                 }
             }
         }
@@ -222,12 +226,27 @@ class UserCreate():
         finally:
             session.close()
 
-    def _insert_user_to_kvs(self, user):
+    def _create_user_to_kvs(self, user_from_db):
+        '''
+          KVS INSERT 用のオブジェクトを生成して返します。
+        '''
+        return {
+            'user_id' : user_from_db.user_id,
+            'name' : user_from_db.name,
+            'affiliation_group' : user_from_db.affiliation_group,
+            'managerial_position' : user_from_db.managerial_position,
+            'mail_address' : user_from_db.mail_address,
+        }
+
+    def _insert_user_to_kvs(self, user_auth_key, user_to_kvs):
         '''
           KVSにユーザー情報を登録します。
         '''
         try:
             print(u'KVSにユーザー情報を登録します。')
+            conn = redis.StrictRedis(host='localhost', port=6379)
+            conn.hmset(user_auth_key, user_to_kvs)
+            print(json.dumps(conn.hgetall(user_auth_key), ensure_ascii=False, indent=4))
             return True
         except Exception as e:
             print(e.__class__)
@@ -254,35 +273,43 @@ class UserRead():
         '''
         try:
             print(u'UserRead.read()開始') # debug
-            # Content-Body を JSON 形式として辞書に変換する
+            # json→dict
             request_json = json.loads(request.data)
-            # リクエストされたパスと ID を持つユーザを探す
-            acccess_token = request_json['acccess_token']
-            user_auth_key = request_json['request_data']['user_auth_key']
-
+            acccess_token = request_json['acccess_token']                  # アクセストークン
+            user_auth_key = request_json['request_data']['user_auth_key']  # ユーザー認証キー
+            # アクセストークンチェック
             if acccess_token != 'calendar-app':
                 print(u'acccess_tokenが不正です。')
-                # レスポンスオブジェクトを作る
+                # ユーザー情報取得
                 user = self._get_user_for_acccess_token_error()
-                response = jsonify(user)
-                response.status_code = 200
-                return response
-            # テストモード判定
+                # ユーザー情報を返す (アクセストークン用の固定値)
+                return Response(
+                    json.dumps(user, ensure_ascii=False, indent=4),
+                    mimetype='application/json',
+                    status=200,
+                )
+            # テストモードチェック
             elif api_util.get_test_mode(self) == 'true':
                 print(u"test mode : yes")
-                # レスポンスオブジェクトを作る
+                # ユーザー情報取得
                 user = self._get_user_from_test_data(user_auth_key)
-                response = jsonify(user)
-                print(response)
-                response.status_code = 200
-                return response
+                # ユーザー情報を返す (テストモード用の固定値)
+                return Response(
+                    json.dumps(user, ensure_ascii=False, indent=4),
+                    mimetype='application/json',
+                    status=200,
+                )
+            # 通常モード
             else:
-                # レスポンスオブジェクトを作る
+                # ユーザー情報取得 (検索条件にユーザー認証キーをセットしてRedisから取得)
                 user = self._get_user_from_kvs(user_auth_key)
-                response = jsonify(user)
-                # ステータスコードは Created (201)
-                response.status_code = 200
-                return response
+                print(json.dumps(user, ensure_ascii=False, indent=4))
+                # ユーザー情報を返す
+                return Response(
+                    json.dumps(user, ensure_ascii=False, indent=4),
+                    mimetype='application/json',
+                    status=200,
+                )
         except Exception as e:
             print(e.__class__)
             print(e)
@@ -293,7 +320,7 @@ class UserRead():
         '''
         return {
             'result_code'    : 200,
-            'result_message' : '正常終了',
+            'result_message' : u'正常終了',
             'response_data'  : {
                 'user_id' : '',
                 'name' : '',
@@ -301,7 +328,7 @@ class UserRead():
                 'managerial_position' : [],
                 'mail_address' : [],
                 'unit_error' : {
-                    '400' : 'アクセストークン不正'
+                    '400' : u'アクセストークン不正'
                 }
             }
         }
@@ -311,11 +338,15 @@ class UserRead():
           KVSからユーザー情報を取得して返します。
         '''
         try:
-            # ToDo :
             print(u'KVSからユーザー情報を取得して返します。')
+            # Redisとのコネクション取得
+            conn = redis.StrictRedis(host='localhost', port=6379)
+            # ユーザー認証キーを引数に与えてユーザー情報を取得して返す
+            return conn.hgetall(user_auth_key)
         except Exception as e:
             print(e.__class__)
             print(e)
+            raise
 
     def _get_user_from_test_data(self, user_auth_key):
         '''

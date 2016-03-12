@@ -85,24 +85,21 @@ class UserMapper(object):
     @classmethod
     def select(cls, session, **kwargs):
         print('UserMapper.select()開始')
-        print('**kwargs : ' + json.dumps(kwargs)) # debug
         user_list_from_db = session.query(UserEntity).filter_by(**kwargs).all()
-        # print(pickle.dumps(user_list_from_db))
-        api_util.to_json(user_list_from_db)
+        print(api_util.to_json_for_sqlalchemy(user_list_from_db)) # debug
         user_list = []
         for user_from_db in user_list_from_db:
-            user = User(
-                id_=user_from_db.id,
-                user_id=user_from_db.user_id,
-                password=user_from_db.password,
-                name=user_from_db.name,
-                affiliation_group=user_from_db.affiliation_group,
-                managerial_position=user_from_db.managerial_position,
-                mail_address=user_from_db.mail_address
+            user_list.append(
+                User(
+                    id_=user_from_db.id,
+                    user_id=user_from_db.user_id,
+                    password=user_from_db.password,
+                    name=user_from_db.name,
+                    affiliation_group=user_from_db.affiliation_group,
+                    managerial_position=user_from_db.managerial_position,
+                    mail_address=user_from_db.mail_address
+                )
             )
-            print('user_id : ' + user_from_db.user_id) # debug
-            print('id : ' + str(user_from_db.id)) # debug
-            user_list.append(user)
         return user_list
 
     @classmethod
