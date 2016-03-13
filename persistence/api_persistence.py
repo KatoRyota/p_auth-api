@@ -13,6 +13,7 @@ import os
 import json
 import pickle
 import ConfigParser
+import logging
 # }}}
 
 # サードパーティーモジュールのインポート {{{
@@ -84,9 +85,9 @@ class UserMapper(object):
 
     @classmethod
     def select(cls, session, **kwargs):
-        print('UserMapper.select()開始')
+        logger.info('UserMapper.select()開始')
         user_list_from_db = session.query(UserEntity).filter_by(**kwargs).all()
-        print(api_util.to_json_for_sqlalchemy(user_list_from_db)) # debug
+        logger.debug(u'DBから取得したデータ : %s' % api_util.to_json_for_sqlalchemy(user_list_from_db))
         user_list = []
         for user_from_db in user_list_from_db:
             user_list.append(
@@ -136,10 +137,10 @@ if __name__ == '__main__':
         # データベース, テーブル作成
         Base.metadata.create_all(bind=engine, checkfirst=False)
     except Exception as e:
-        print(e.__class__)
-        print(e)
+        logger.error(e.__class__)
+        logger.error(e)
     finally:
-        print(os.getpid())
+        logger.debug(os.getpid())
         exit()
 # }}}
 

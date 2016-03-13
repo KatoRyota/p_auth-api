@@ -32,9 +32,10 @@ from api_domain import UserCreate, UserRead, UserUpdate, UserDelete
 # }}}
 
 # 前処理 {{{
-# ロギングライブラリ読込
-logging.config.fileConfig('logging.conf')
 try:
+    # ロギングライブラリ読込
+    logging.config.fileConfig('logging.conf')
+
     # 起動パラメータのパーサー生成
     parser = OptionParser()
     parser.add_option("-t", "--host", dest="host", help=u"ホスト名を指定して下さい。 ",
