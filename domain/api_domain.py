@@ -48,15 +48,15 @@ class UserCreate():
             self.config = ConfigParser.SafeConfigParser()
             self.config.read(os.path.dirname(os.path.abspath(__file__)) + '/../api.conf')
         except Exception as e:
-            logger.error(e.__class__)
-            logger.error(e)
+            self.logger.error(e.__class__)
+            self.logger.error(e)
 
     def create(self, request):
         '''
           KVSにユーザー情報を登録します。
         '''
         try:
-            logger.info(u'UserCreate.create()開始') # debug
+            self.logger.info(u'UserCreate.create()開始') # debug
             # json→dict
             request_json = json.loads(request.data)
             acccess_token = request_json['acccess_token']        # アクセストークン
@@ -64,17 +64,17 @@ class UserCreate():
             password = request_json['request_data']['password']  # パスワード
             # アクセストークンチェック
             if acccess_token != 'calendar-app':
-                logger.warn(u'acccess_tokenが不正です。')
+                self.logger.warn(u'acccess_tokenが不正です。')
                 # 認証情報オブジェクトを生成 (認証キーは空文字)
                 auth_info = self._get_auth_info_for_acccess_token_error()
             # テストモードチェック
             elif api_util.get_test_mode(self) == 'true':
-                logger.info(u"test mode : yes") # debug
+                self.logger.info(u"test mode : yes") # debug
                 # 認証情報オブジェクトを生成 (認証キーはテスト用の固定値)
                 auth_info = self._get_auth_info_from_test_data(user_id, password)
             # 通常モード
             else:
-                logger.info(u"test mode : no") # debug
+                self.logger.info(u"test mode : no") # debug
                 # DBからユーザー情報取得
                 user_list_from_db = self._select_user_from_db(user_id, password)
                 # レコード数チェック
@@ -93,8 +93,8 @@ class UserCreate():
                 status=200,
             )
         except Exception as e:
-            logger.error(e.__class__)
-            logger.error(e)
+            self.logger.error(e.__class__)
+            self.logger.error(e)
 
     def _get_auth_info_for_auth_success(self, user_list_from_db):
         # ユーザー認証キー生成
@@ -166,23 +166,23 @@ class UserCreate():
             # 入力チェック
             if user_id == 'aaaa':
                 if password != '1111': # 修正するときはtest_data.pyのコメントも一緒に行うこと。
-                    logger.warn(u'パスワード不正 : user_id : ' + user_id)
+                    self.logger.warn(u'パスワード不正 : user_id : ' + user_id)
                     abort(400)
                     exit()
             elif user_id == 'bbbb':
                 if password != '2222': # 修正するときはtest_data.pyのコメントも一緒に行うこと。
-                    logger.warn(u'パスワード不正 : user_id : ' + user_id)
+                    self.logger.warn(u'パスワード不正 : user_id : ' + user_id)
                     abort(400)
                     exit()
             else:
-                logger.warn(u'ユーザーID不正 : user_id : ' + user_id)
+                self.logger.warn(u'ユーザーID不正 : user_id : ' + user_id)
                 abort(400)
                 exit()
 
             return test_data.account[user_id]
         except Exception as e:
-            logger.error(e.__class__)
-            logger.error(e)
+            self.logger.error(e.__class__)
+            self.logger.error(e)
 
     def _create_user_auth_key(self, user_id):
         '''
@@ -214,13 +214,13 @@ class UserCreate():
             # セッションはスレッドローカルにする
             Session = scoped_session(sessionmaker(autocommit=False, autoflush=False, bind=engine))
             session = Session()
-            logger.debug('user_id : %s, password : %s' % (user_id, password))
+            self.logger.debug('user_id : %s, password : %s' % (user_id, password))
             user_list_from_db = UserMapper.select(session, user_id=user_id, password=password)
             session.commit()
             return user_list_from_db
         except Exception as e:
-            logger.error(e.__class__)
-            logger.error(e)
+            self.logger.error(e.__class__)
+            self.logger.error(e)
             session.rollback()
             raise
         finally:
@@ -247,17 +247,17 @@ class UserCreate():
             # TODO
             #   恐らくここでエラーになってる (SSH接続からログアウトしたときの話)
 
-            logger.info(u'KVSにユーザー情報を登録します。')
+            self.logger.info(u'KVSにユーザー情報を登録します。')
             # Redisとのコネクション取得
             conn = redis.StrictRedis(self.config.get('data_source_for_kvs', 'host'),
                                      self.config.get('data_source_for_kvs', 'port'))
             # Redisにユーザー認証キーをKey, ユーザー情報をValueとして登録
             conn.hmset(user_auth_key, user_to_kvs)
-            logger.debug(u'Redisに登録したデータ : %s' % json.dumps(conn.hgetall(user_auth_key), ensure_ascii=False, indent=4))
+            self.logger.debug(u'Redisに登録したデータ : %s' % json.dumps(conn.hgetall(user_auth_key), ensure_ascii=False, indent=4))
             return True
         except Exception as e:
-            logger.error(e.__class__)
-            logger.error(e)
+            self.logger.error(e.__class__)
+            self.logger.error(e)
             return False
 
 
@@ -274,27 +274,27 @@ class UserRead():
             self.config = ConfigParser.SafeConfigParser()
             self.config.read(os.path.dirname(os.path.abspath(__file__)) + '/../api.conf')
         except Exception as e:
-            logger.error(e.__class__)
-            logger.error(e)
+            self.logger.error(e.__class__)
+            self.logger.error(e)
 
     def read(self, request):
         '''
           KVSからユーザー情報を取得して返します。
         '''
         try:
-            logger.info(u'UserRead.read()開始')
+            self.logger.info(u'UserRead.read()開始')
             # json→dict
             request_json = json.loads(request.data)
             acccess_token = request_json['acccess_token']                  # アクセストークン
             user_auth_key = request_json['request_data']['user_auth_key']  # ユーザー認証キー
             # アクセストークンチェック
             if acccess_token != 'calendar-app':
-                logger.warn(u'acccess_tokenが不正です。')
+                self.logger.warn(u'acccess_tokenが不正です。')
                 # ユーザー情報取得 (アクセストークンエラー用の固定値)
                 user = self._get_user_for_acccess_token_error()
             # テストモードチェック
             elif api_util.get_test_mode(self) == 'true':
-                logger.info(u"test mode : yes")
+                self.logger.info(u"test mode : yes")
                 # ユーザー情報取得 (テストモード用の固定値)
                 user = self._get_user_from_test_data(user_auth_key)
             # 通常モード
@@ -308,8 +308,8 @@ class UserRead():
                 status=200,
             )
         except Exception as e:
-            logger.error(e.__class__)
-            logger.error(e)
+            self.logger.error(e.__class__)
+            self.logger.error(e)
 
     def _get_user_for_acccess_token_error(self):
         '''
@@ -339,24 +339,24 @@ class UserRead():
             # TODO
             #   恐らくここでエラーになってる (SSH接続からログアウトしたときの話)
 
-            logger.info(u'KVSからユーザー情報を取得して返します。')
+            self.logger.info(u'KVSからユーザー情報を取得して返します。')
             # Redisとのコネクション取得
             conn = redis.StrictRedis(self.config.get('data_source_for_kvs', 'host'),
                                      self.config.get('data_source_for_kvs', 'port'))
-            logger.debug(u'Redisから取得したデータ : %s' % json.dumps(conn.hgetall(user_auth_key),
+            self.logger.debug(u'Redisから取得したデータ : %s' % json.dumps(conn.hgetall(user_auth_key),
                                                                       ensure_ascii=False, indent=4))
             # ユーザー認証キーを引数に与えてユーザー情報を取得して返す
             return conn.hgetall(user_auth_key)
         except Exception as e:
-            logger.error(e.__class__)
-            logger.error(e)
+            self.logger.error(e.__class__)
+            self.logger.error(e)
             raise
 
     def _convert_user_from_kvs(self, user_from_kvs):
         '''
           KVSから取得したユーザー情報をレスポンスオブジェクトに変換して返します。
         '''
-        logger.info(u'KVSから取得したユーザー情報をレスポンスオブジェクトに変換して返します。')
+        self.logger.info(u'KVSから取得したユーザー情報をレスポンスオブジェクトに変換して返します。')
         return {
             'result_code'    : 200,
             'result_message' : u'正常終了',
@@ -385,8 +385,8 @@ class UserRead():
         try:
             return test_data.user[user_auth_key]
         except Exception as e:
-            logger.error(e.__class__)
-            logger.error(e)
+            self.logger.error(e.__class__)
+            self.logger.error(e)
 
 
 class UserUpdate():
@@ -402,8 +402,8 @@ class UserUpdate():
             self.config = ConfigParser.SafeConfigParser()
             self.config.read(os.path.dirname(os.path.abspath(__file__)) + '/../api.conf')
         except Exception as e:
-            logger.error(e.__class__)
-            logger.error(e)
+            self.logger.error(e.__class__)
+            self.logger.error(e)
 
     def update(self, request):
         '''
@@ -411,10 +411,10 @@ class UserUpdate():
         '''
         try:
             # TODO :
-            logger.info(u'KVS上のユーザー情報を更新します。')
+            self.logger.info(u'KVS上のユーザー情報を更新します。')
         except Exception as e:
-            logger.error(e.__class__)
-            logger.error(e)
+            self.logger.error(e.__class__)
+            self.logger.error(e)
 
 
 class UserDelete():
@@ -430,8 +430,8 @@ class UserDelete():
             self.config = ConfigParser.SafeConfigParser()
             self.config.read(os.path.dirname(os.path.abspath(__file__)) + '/../api.conf')
         except Exception as e:
-            logger.error(e.__class__)
-            logger.error(e)
+            self.logger.error(e.__class__)
+            self.logger.error(e)
 
     def delete(self, request):
         '''
@@ -439,10 +439,10 @@ class UserDelete():
         '''
         try:
             # ToDo :
-            logger.info(u'KVS上のユーザー情報を削除します。')
+            self.logger.info(u'KVS上のユーザー情報を削除します。')
         except Exception as e:
-            logger.error(e.__class__)
-            logger.error(e)
+            self.logger.error(e.__class__)
+            self.logger.error(e)
 
 
 # 後処理 {{{

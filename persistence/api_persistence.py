@@ -68,6 +68,9 @@ class UserMapper(object):
     '''
       UserオブジェクトとUserEntityオブジェクトをマッピングするマッパークラス
     '''
+    # ロガー
+    logger = logging.getLogger('logExample')
+
     @classmethod
     def insert(cls, user):
         session = cls.get_session()
@@ -85,9 +88,9 @@ class UserMapper(object):
 
     @classmethod
     def select(cls, session, **kwargs):
-        logger.info('UserMapper.select()開始')
+        self.logger.info('UserMapper.select()開始')
         user_list_from_db = session.query(UserEntity).filter_by(**kwargs).all()
-        logger.debug(u'DBから取得したデータ : %s' % api_util.to_json_for_sqlalchemy(user_list_from_db))
+        self.logger.debug(u'DBから取得したデータ : %s' % api_util.to_json_for_sqlalchemy(user_list_from_db))
         user_list = []
         for user_from_db in user_list_from_db:
             user_list.append(
@@ -128,6 +131,8 @@ class User(object):
 if __name__ == '__main__':
     # データベース、テーブル作成処理。モジュールとしてimportされる時は実行されない。
     try:
+        # ロガー
+        logger = logging.getLogger('logExample')
         # 設定ファイルのロード
         config = ConfigParser.SafeConfigParser()
         config.read(os.path.dirname(os.path.abspath(__file__)) + '/../api.conf')
