@@ -88,9 +88,9 @@ class UserMapper(object):
 
     @classmethod
     def select(cls, session, **kwargs):
-        self.logger.info('UserMapper.select()開始')
+        cls.logger.info('UserMapper.select()開始')
         user_list_from_db = session.query(UserEntity).filter_by(**kwargs).all()
-        self.logger.debug(u'DBから取得したデータ : %s' % api_util.to_json_for_sqlalchemy(user_list_from_db))
+        cls.logger.debug(u'DBから取得したデータ : %s' % api_util.to_json_for_sqlalchemy(user_list_from_db))
         user_list = []
         for user_from_db in user_list_from_db:
             user_list.append(

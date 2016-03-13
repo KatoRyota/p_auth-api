@@ -253,7 +253,7 @@ class UserCreate():
                                      self.config.get('data_source_for_kvs', 'port'))
             # Redisにユーザー認証キーをKey, ユーザー情報をValueとして登録
             conn.hmset(user_auth_key, user_to_kvs)
-            self.logger.debug(u'Redisに登録したデータ : %s' % json.dumps(conn.hgetall(user_auth_key), ensure_ascii=False, indent=4))
+            self.logger.debug(u'Redisに登録したデータ : %s' % api_util.pp(conn.hgetall(user_auth_key)))
             return True
         except Exception as e:
             self.logger.error(e.__class__)
