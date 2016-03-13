@@ -343,8 +343,7 @@ class UserRead():
             # Redisとのコネクション取得
             conn = redis.StrictRedis(self.config.get('data_source_for_kvs', 'host'),
                                      self.config.get('data_source_for_kvs', 'port'))
-            self.logger.debug(u'Redisから取得したデータ : %s' % json.dumps(conn.hgetall(user_auth_key),
-                                                                      ensure_ascii=False, indent=4))
+            self.logger.debug(u'Redisから取得したデータ : %s' % api_util.pp(conn.hgetall(user_auth_key)))
             # ユーザー認証キーを引数に与えてユーザー情報を取得して返す
             return conn.hgetall(user_auth_key)
         except Exception as e:
