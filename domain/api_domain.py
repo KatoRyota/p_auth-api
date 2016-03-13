@@ -243,10 +243,6 @@ class UserCreate():
           KVSにユーザー情報を登録します。
         '''
         try:
-
-            # TODO
-            #   恐らくここでエラーになってる (SSH接続からログアウトしたときの話)
-
             self.logger.info(u'KVSにユーザー情報を登録します。')
             # Redisとのコネクション取得
             conn = redis.StrictRedis(self.config.get('data_source_for_kvs', 'host'),
@@ -335,10 +331,6 @@ class UserRead():
           KVSからユーザー情報を取得して返します。
         '''
         try:
-
-            # TODO
-            #   恐らくここでエラーになってる (SSH接続からログアウトしたときの話)
-
             self.logger.info(u'KVSからユーザー情報を取得して返します。')
             # Redisとのコネクション取得
             conn = redis.StrictRedis(self.config.get('data_source_for_kvs', 'host'),
@@ -437,7 +429,7 @@ class UserDelete():
           KVS上のユーザー情報を削除します。
         '''
         try:
-            # ToDo :
+            # TODO :
             self.logger.info(u'KVS上のユーザー情報を削除します。')
         except Exception as e:
             self.logger.error(e.__class__)
