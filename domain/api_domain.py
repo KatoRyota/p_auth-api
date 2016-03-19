@@ -249,6 +249,7 @@ class UserCreate():
                                      self.config.get('data_source_for_kvs', 'port'))
             # Redisにユーザー認証キーをKey, ユーザー情報をValueとして登録
             conn.hmset(user_auth_key, user_to_kvs)
+            conn.expire(user_auth_key, 60 * 60 * 1) # ユーザー認証キーの有効期限を1時間に設定
             self.logger.debug(u'Redisに登録したデータ : %s' % api_util.pp(conn.hgetall(user_auth_key)))
             return True
         except Exception as e:
@@ -348,7 +349,7 @@ class UserRead():
           KVSから取得したユーザー情報をレスポンスオブジェクトに変換して返します。
         '''
         self.logger.info(u'KVSから取得したユーザー情報をレスポンスオブジェクトに変換して返します。')
-        return {
+        user = {
             'result_code'    : 200,
             'result_message' : u'正常終了',
             'response_data'  : {
@@ -368,6 +369,10 @@ class UserRead():
                 }
             }
         }
+
+        self.logger.info(u'Redisから取得したユーザー情報 : %s' % (json.dumps(user, ensure_ascii=False, indent=4)))
+
+        return user
 
     def _get_user_from_test_data(self, user_auth_key):
         '''
