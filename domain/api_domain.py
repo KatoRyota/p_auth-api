@@ -24,6 +24,7 @@ import redis
 # }}}
 
 # 独自モジュールのインポート {{{
+from api_const import Result, Error
 from api_persistence import User, UserMapper
 import api_util
 # テストデータ
@@ -34,7 +35,7 @@ import test_data
 # }}}
 
 
-class UserCreate():
+class UserCreate(object):
     '''
       ユーザー情報を作成するクラス。
     '''
@@ -118,12 +119,12 @@ class UserCreate():
           アクセストークンエラー用のレスポンスオブジェクトを生成して返します。
         '''
         return {
-            'result_code'    : 200,
-            'result_message' : u'正常終了',
+            'result_code'    : Result.SUCCESS_001['code'],
+            'result_message' : Result.SUCCESS_001['message'],
             'response_data'  : {
                 'user_auth_key' : '',
                 'unit_error' : {
-                    '400' : u'アクセストークン不正'
+                    Error.ERROR_001['code'] : Error.ERROR_001['message']
                 }
             }
         }
@@ -133,12 +134,12 @@ class UserCreate():
           認証エラー用のレスポンスオブジェクトを生成して返します。
         '''
         return {
-            'result_code'    : 200,
-            'result_message' : u'正常終了',
+            'result_code'    : Result.SUCCESS_001['code'],
+            'result_message' : Result.SUCCESS_001['message'],
             'response_data'  : {
                 'user_auth_key' : '',
                 'unit_error' : {
-                    '401' : u'認証エラー'
+                    Error.ERROR_002['code'] : Error.ERROR_002['message']
                 }
             }
         }
@@ -148,12 +149,12 @@ class UserCreate():
           KVS INSERT エラー用のレスポンスオブジェクトを生成して返します。
         '''
         return {
-            'result_code'    : 200,
-            'result_message' : u'正常終了',
+            'result_code'    : Result.SUCCESS_001['code'],
+            'result_message' : Result.SUCCESS_001['message'],
             'response_data'  : {
                 'user_auth_key' : '',
                 'unit_error' : {
-                    '402' : u'KVS INSERT エラー'
+                    Error.ERROR_003['code'] : Error.ERROR_003['message']
                 }
             }
         }
@@ -195,12 +196,12 @@ class UserCreate():
           認証情報を生成して返します。
         '''
         return {
-            'result_code'    : 200,
-            'result_message' : u'正常終了',
+            'result_code'    : Result.SUCCESS_001['code'],
+            'result_message' : Result.SUCCESS_001['message'],
             'response_data'  : {
                 'user_auth_key' : user_auth_key,
                 'unit_error' : {
-                    '200' : u'正常終了'
+                    Error.SUCCESS_001['code'] : Error.SUCCESS_001['message']
                 }
             }
         }
@@ -258,7 +259,7 @@ class UserCreate():
             return False
 
 
-class UserRead():
+class UserRead(object):
     '''
       ユーザー情報を読み込むクラス。
     '''
@@ -313,8 +314,8 @@ class UserRead():
             アクセストークンエラー用のレスポンスオブジェクトを生成して返します。
         '''
         return {
-            'result_code'    : 200,
-            'result_message' : u'正常終了',
+            'result_code'    : Result.SUCCESS_001['code'],
+            'result_message' : Result.SUCCESS_001['message'],
             'response_data'  : {
                 'user_id' : '',
                 'name' : '',
@@ -322,7 +323,7 @@ class UserRead():
                 'managerial_position' : [],
                 'mail_address' : [],
                 'unit_error' : {
-                    '400' : u'アクセストークン不正'
+                    Error.ERROR_001['code'] : Error.ERROR_001['message']
                 }
             }
         }
@@ -350,8 +351,8 @@ class UserRead():
         '''
         self.logger.info(u'KVSから取得したユーザー情報をレスポンスオブジェクトに変換して返します。')
         user = {
-            'result_code'    : 200,
-            'result_message' : u'正常終了',
+            'result_code'    : Result.SUCCESS_001['code'],
+            'result_message' : Result.SUCCESS_001['message'],
             'response_data'  : {
                 'user_id' : user_from_kvs['user_id'].decode('utf-8'),
                 'name' : user_from_kvs['name'].decode('utf-8'),
@@ -365,7 +366,7 @@ class UserRead():
                     x.decode('utf-8') for x in user_from_kvs['mail_address'].split(',')
                 ],
                 'unit_error' : {
-                    '200' : u'正常終了'
+                    Error.SUCCESS_001['code'] : Error.SUCCESS_001['message']
                 }
             }
         }
@@ -385,7 +386,7 @@ class UserRead():
             self.logger.error(e)
 
 
-class UserUpdate():
+class UserUpdate(object):
     '''
       ユーザー情報を更新するクラス。
     '''
@@ -413,7 +414,7 @@ class UserUpdate():
             self.logger.error(e)
 
 
-class UserDelete():
+class UserDelete(object):
     '''
       ユーザー情報を削除するクラス。
     '''
