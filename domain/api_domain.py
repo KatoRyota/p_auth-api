@@ -56,6 +56,8 @@ class UserCreate(object):
         '''
           KVSにユーザー情報を登録します。
         '''
+        # ユーザー認証情報
+        auth_info = None
         try:
             self.logger.info(u'UserCreate.create()開始') # debug
             # json→dict
@@ -66,12 +68,12 @@ class UserCreate(object):
             # アクセストークンチェック
             if acccess_token != 'calendar-app':
                 self.logger.warn(u'acccess_tokenが不正です。')
-                # 認証情報オブジェクトを生成 (認証キーは空文字)
+                # ユーザー認証情報取得 (認証キーは空文字)
                 auth_info = self._get_auth_info_for_acccess_token_error()
             # テストモードチェック
             elif api_util.get_test_mode(self) == 'true':
                 self.logger.info(u"test mode : yes") # debug
-                # 認証情報オブジェクトを生成 (認証キーはテスト用の固定値)
+                # ユーザー認証情報取得 (認証キーはテスト用の固定値)
                 auth_info = self._get_auth_info_from_test_data(user_id, password)
             # 通常モード
             else:
@@ -80,22 +82,52 @@ class UserCreate(object):
                 user_list_from_db = self._select_user_from_db(user_id, password)
                 # レコード数チェック
                 if len(user_list_from_db) == 1:
-                    # レコードが1件の場合は認証成功
-                    # 認証情報オブジェクトを生成
+                    # 単一のユーザー情報が取得された場合は認証成功
+                   # ユーザー認証情報取得
                     auth_info = self._get_auth_info_for_auth_success(user_list_from_db)
                 else:
-                    # レコードが複数件の場合は認証失敗
-                    # 認証情報オブジェクトを生成 (認証キーは空文字)
+                    # ユーザー情報が存在しない or 複数のユーザー情報が取得された場合は認証失敗
+                    # ユーザー認証情報取得 (認証キーは空文字)
                     auth_info = self._get_auth_info_for_auth_error()
+        except Exception as e:
+            self.logger.error(e.__class__)
+            self.logger.error(e)
+            # 認証情報取得 (認証キーは空文字)
+            auth_info = self._get_auth_info_for_system_error()
+        finally:
             # ユーザー認証情報を返す (認証キーは前処理で取得したもの)
             return Response(
                 json.dumps(auth_info, ensure_ascii=False, indent=4),
                 mimetype='application/json',
                 status=200,
             )
-        except Exception as e:
-            self.logger.error(e.__class__)
-            self.logger.error(e)
+
+    def _get_auth_info_for_acccess_token_error(self):
+        '''
+          アクセストークンエラー用のレスポンスオブジェクトを生成して返します。
+        '''
+        return {
+            'result_code'    : Result.SUCCESS_001['code'],
+            'result_message' : Result.SUCCESS_001['message'],
+            'response_data'  : {
+                'user_auth_key' : '',
+                'unit_error' : {
+                    Error.ERROR_001['code'] : Error.ERROR_001['message']
+                }
+            }
+        }
+
+    def _get_auth_info_for_system_error(self):
+        return {
+            'result_code'    : Result.SUCCESS_001['code'],
+            'result_message' : Result.SUCCESS_001['message'],
+            'response_data'  : {
+                'user_auth_key' : '',
+                'unit_error' : {
+                    Error.ERROR_005['code'] : Error.ERROR_005['message']
+                }
+            }
+        }
 
     def _get_auth_info_for_auth_success(self, user_list_from_db):
         # ユーザー認証キー生成
@@ -113,21 +145,6 @@ class UserCreate(object):
             auth_info = self._get_auth_info_for_kvs_insert_error()
         # 認証情報オブジェクトを返す
         return auth_info
-
-    def _get_auth_info_for_acccess_token_error(self):
-        '''
-          アクセストークンエラー用のレスポンスオブジェクトを生成して返します。
-        '''
-        return {
-            'result_code'    : Result.SUCCESS_001['code'],
-            'result_message' : Result.SUCCESS_001['message'],
-            'response_data'  : {
-                'user_auth_key' : '',
-                'unit_error' : {
-                    Error.ERROR_001['code'] : Error.ERROR_001['message']
-                }
-            }
-        }
 
     def _get_auth_info_for_auth_error(self):
         '''
@@ -279,6 +296,8 @@ class UserRead(object):
         '''
           KVSからユーザー情報を取得して返します。
         '''
+        # ユーザー情報
+        user = None
         try:
             self.logger.info(u'UserRead.read()開始')
             # json→dict
@@ -299,15 +318,19 @@ class UserRead(object):
             else:
                 # ユーザー情報取得 (検索条件にユーザー認証キーをセットしてRedisから取得)
                 user = self._get_user(user_auth_key)
+        except Exception as e:
+            self.logger.error(e.__class__)
+            self.logger.error(e)
+            # ユーザー情報取得 (システムエラー用の固定値)
+            user = self._get_user_for_system_error()
+        finally:
             # ユーザー情報を返す
             return Response(
                 json.dumps(user, ensure_ascii=False, indent=4),
                 mimetype='application/json',
                 status=200,
             )
-        except Exception as e:
-            self.logger.error(e.__class__)
-            self.logger.error(e)
+
 
     def _get_user_for_acccess_token_error(self):
         '''
@@ -324,6 +347,22 @@ class UserRead(object):
                 'mail_address' : [],
                 'unit_error' : {
                     Error.ERROR_001['code'] : Error.ERROR_001['message']
+                }
+            }
+        }
+
+    def _get_user_for_system_error(self):
+        return {
+            'result_code'    : Result.SUCCESS_001['code'],
+            'result_message' : Result.SUCCESS_001['message'],
+            'response_data'  : {
+                'user_id' : '',
+                'name' : '',
+                'affiliation_group' : [],
+                'managerial_position' : [],
+                'mail_address' : [],
+                'unit_error' : {
+                    Error.ERROR_005['code'] : Error.ERROR_005['message']
                 }
             }
         }
@@ -350,7 +389,6 @@ class UserRead(object):
                     }
                 }
             }
-
 
     def _get_user_from_kvs(self, user_auth_key):
         '''
