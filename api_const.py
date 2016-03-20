@@ -30,6 +30,7 @@ class Error(object):
     ERROR_001   = {'code' : 'ERROR_001',   'message' : u'アクセストークン不正'}
     ERROR_002   = {'code' : 'ERROR_002',   'message' : u'認証エラー'}
     ERROR_003   = {'code' : 'ERROR_003',   'message' : u'KVSへのデータ登録時に異常発生'}
+    ERROR_004   = {'code' : 'ERROR_004',   'message' : u'ユーザー認証キーが存在しません。'}
     WARN_001    = {'code' : 'WARN_001',    'message' : u'警告'}
 
 # 後処理 {{{

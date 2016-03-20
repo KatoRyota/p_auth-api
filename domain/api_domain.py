@@ -298,7 +298,7 @@ class UserRead(object):
             # 通常モード
             else:
                 # ユーザー情報取得 (検索条件にユーザー認証キーをセットしてRedisから取得)
-                user = self._convert_user_from_kvs(self._get_user_from_kvs(user_auth_key))
+                user = self._get_user(user_auth_key)
             # ユーザー情報を返す
             return Response(
                 json.dumps(user, ensure_ascii=False, indent=4),
@@ -327,6 +327,30 @@ class UserRead(object):
                 }
             }
         }
+
+    def _get_user(self, user_auth_key):
+        # KVSからユーザー情報を取得
+        user_from_kvs = self._get_user_from_kvs(user_auth_key)
+        if len(user_from_kvs) == 1:
+            # 単一のユーザー情報が取得された場合はレスポンスオブジェクトに変換
+            return _convert_user_from_kvs(user_from_kvs)
+        else:
+            # ユーザー情報が存在しない or 複数のユーザー情報が取得された場合はエラー
+            return {
+                'result_code'    : Result.SUCCESS_001['code'],
+                'result_message' : Result.SUCCESS_001['message'],
+                'response_data'  : {
+                    'user_id' : '',
+                    'name' : '',
+                    'affiliation_group' : [],
+                    'managerial_position' : [],
+                    'mail_address' : [],
+                    'unit_error' : {
+                        Error.ERROR_004['code'] : Error.ERROR_004['message']
+                    }
+                }
+            }
+
 
     def _get_user_from_kvs(self, user_auth_key):
         '''
