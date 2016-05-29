@@ -370,9 +370,11 @@ class UserRead(object):
     def _get_user(self, user_auth_key):
         # KVSからユーザー情報を取得
         user_from_kvs = self._get_user_from_kvs(user_auth_key)
-        if len(user_from_kvs) == 1:
+        self.logger.info(u'debug ->')
+        self.logger.info(len(user_from_kvs))
+        if user_from_kvs:
             # 単一のユーザー情報が取得された場合はレスポンスオブジェクトに変換
-            return _convert_user_from_kvs(user_from_kvs)
+            return self._convert_user_from_kvs(user_from_kvs)
         else:
             # ユーザー情報が存在しない or 複数のユーザー情報が取得された場合はエラー
             return {
