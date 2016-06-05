@@ -120,7 +120,7 @@ def __parse_initialize_parameter():
     print(u"debug mode : yes")
 
   if len(args) != 0:
-   parser.error(u"引数は指定できません。")
+    parser.error(u"引数は指定できません。")
     parser.print_help()
     exit()
 
